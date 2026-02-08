@@ -265,13 +265,12 @@
     <div class="panel">
       <div class="row">
         <button id="back">← Back to Setup</button>
-        <button id="reload">Reload</button>
       </div>
 
       <!-- Grid + team labels -->
       <div class="boardWrap">
-        <div class="teamTopLabel"><span class="teamPill" id="teamTopName">New England Patriots</span></div>
-        <div class="teamLeftLabel"><span class="teamPill left" id="teamLeftName">Seattle Seahawks</span></div>
+        <div class="teamTopLabel"><span class="teamPill" id="teamTopName">Patriots</span></div>
+        <div class="teamLeftLabel"><span class="teamPill left" id="teamLeftName">Seahawks</span></div>
 
         <div class="grid-wrap">
           <div id="grid" class="grid"></div>
@@ -331,8 +330,7 @@
 
     const BET_PER_SQUARE = 1;
 
-    // Split B
-    const SPLIT = { Q1:0.20, HALF:0.30, Q3:0.20, FINAL:0.30 };
+    const SPLIT = { Q1:0.10, HALF:0.15, Q3:0.25, FINAL:0.50 };
 
     const inputs = {
       Q1: document.getElementById("q1"),
@@ -452,10 +450,6 @@
           <span class="pill">Digits</span>
           <span class="pill">Seed: ${state.seed}</span>
         </div>
-        <div class="muted" style="margin-bottom:10px;">
-          Patriots (columns): [${colDigits.join(", ")}]<br/>
-          Seahawks (rows): [${rowDigits.join(", ")}]
-        </div>
       `;
 
       const order = ["Q1","HALF","Q3","FINAL"];
@@ -510,29 +504,21 @@
       moneySquareEl.innerHTML = `
         <div class="moneyTitle">
           <h3><span class="spark"></span> 💸 💸 💸 winnings </h3>
-          <span class="pill">Split B: 20 / 30 / 20 / 30</span>
+          <span class="pill">Split: 10 / 15 / 25 / 50 </span>
         </div>
-
         <div class="moneyGrid">
           <div class="moneyStat"><span class="k">Squares Sold</span><span class="v">${filled}</span></div>
           <div class="moneyStat"><span class="k">Pot</span><span class="v">${money(pot)}</span></div>
           <div class="moneyStat"><span class="k">$ / Square</span><span class="v">$${BET_PER_SQUARE}</span></div>
-
-          <div class="moneyStat"><span class="k">Q1 (20%)</span><span class="v">${money(pays.Q1)}</span></div>
-          <div class="moneyStat"><span class="k">HALF (30%)</span><span class="v">${money(pays.HALF)}</span></div>
-          <div class="moneyStat"><span class="k">Q3 (20%)</span><span class="v">${money(pays.Q3)}</span></div>
-
-          <div class="moneyStat"><span class="k">FINAL (30%)</span><span class="v">${money(pays.FINAL)}</span></div>
-          <div class="moneyStat"><span class="k">Unassigned/Empty</span><span class="v">${(ready ? "" : "Digits not set")}</span></div>
-          <div class="moneyStat"><span class="k">Rule</span><span class="v">Pat = Col • Sea = Row</span></div>
+          <div class="moneyStat"><span class="k">Q1 (10%)</span><span class="v">${money(pays.Q1)}</span></div>
+          <div class="moneyStat"><span class="k">HALF (15%)</span><span class="v">${money(pays.HALF)}</span></div>
+          <div class="moneyStat"><span class="k">Q3 (25%)</span><span class="v">${money(pays.Q3)}</span></div>
+          <div class="moneyStat"><span class="k">FINAL (50%)</span><span class="v">${money(pays.FINAL)}</span></div>
         </div>
-
         <div class="leader">
           <div class="row" style="justify-content:space-between;margin-bottom:6px;">
             <span class="pill">Totals by Person</span>
-            <span class="pill">Auto-adds per win</span>
           </div>
-
           ${
             leaderboard.length
               ? leaderboard.map(([name, amt]) => `
@@ -570,8 +556,8 @@
 
     function renderGrid(state){
       // Team labels
-      teamTopNameEl.textContent = state.team_top || "New England Patriots";
-      teamLeftNameEl.textContent = state.team_left || "Seattle Seahawks";
+      teamTopNameEl.textContent = state.team_top || "Patriots";
+      teamLeftNameEl.textContent = state.team_left || "Seahawks";
 
       const colDigits = (state.col_digits?.length === 10) ? state.col_digits : null;
       const rowDigits = (state.row_digits?.length === 10) ? state.row_digits : null;
@@ -632,8 +618,6 @@
     document.getElementById("back").addEventListener("click", () => {
       window.location.href = "/";
     });
-
-    document.getElementById("reload").addEventListener("click", load);
 
     document.getElementById("apply").addEventListener("click", async () => {
       const s = await getState();

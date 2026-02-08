@@ -17,8 +17,8 @@ app = Flask(__name__, static_folder=str(STATIC_DIR), static_url_path="/static")
 
 def default_state() -> Dict[str, Any]:
     return {
-        "team_top": "New England Patriots",
-        "team_left": "Seattle Seahawks",
+        "team_top": "Patriots",
+        "team_left": "Seahawks",
         "seed": None,
         "grid": [["" for _ in range(10)] for _ in range(10)],
         "col_digits": [],
