@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Squares Board — Patriots vs Seahawks</title>
+
+  <style>
+    :root{
+      --pat-red:#C60C30;
+      --hawk-green:#69BE28;
+      --bg0:#070b14;
+      --card:rgba(10,14,26,.78);
+      --stroke:rgba(176,183,188,.22);
+      --text:#EAF0FF;
+      --muted:rgba(234,240,255,.72);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:18px;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% 15%, rgba(198,12,48,.20), transparent 60%),
+        radial-gradient(900px 600px at 85% 20%, rgba(105,190,40,.18), transparent 55%),
+        linear-gradient(180deg, var(--bg0), #02040c);
+    }
+    h2{display:flex;align-items:center;gap:10px;font-size:22px;margin:0 0 12px}
+    .dot{width:10px;height:10px;border-radius:999px;background:linear-gradient(90deg,var(--pat-red),var(--hawk-green));
+      box-shadow:0 0 12px rgba(105,190,40,.4),0 0 12px rgba(198,12,48,.4);}
+
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,420px);
+      gap:16px;
+      align-items:start;
+    }
+    @media (max-width: 1200px){
+      .layout{grid-template-columns:1fr}
+      .sidebar{text-align:center}
+    }
+
+    .panel{
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      padding:12px;
+      box-shadow:0 12px 40px rgba(0,0,0,.35);
+    }
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+    input,button{
+      padding:10px 12px;border-radius:12px;border:1px solid var(--stroke);
+      background:rgba(255,255,255,.05);color:var(--text);
+    }
+    input{background:rgba(255,255,255,.04);width:100%}
+    button{cursor:pointer;white-space:nowrap}
+    button:hover{border-color:rgba(176,183,188,.38);background:rgba(255,255,255,.07)}
+
+    /* ===== Grid + Team Labels wrapper ===== */
+    .boardWrap{
+      position:relative;
+      padding-top: 32px; /* space for top team label */
+      padding-left: 48px; /* space for left team label */
+    }
+
+    .teamTopLabel{
+      position:absolute;
+      top: 0;
+      left: 48px;
+      right: 0;
+      height: 24px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      letter-spacing:.6px;
+      color: rgba(234,240,255,.92);
+      text-shadow: 0 1px 0 rgba(0,0,0,.35);
+    }
+
+    .teamLeftLabel{
+      position:absolute;
+      top: 32px;
+      left: 0;
+      width: 40px;
+      bottom: 0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      letter-spacing:.6px;
+      color: rgba(234,240,255,.92);
+      text-shadow: 0 1px 0 rgba(0,0,0,.35);
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+
+    .teamPill{
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(176,183,188,.20);
+      background:
+        linear-gradient(90deg, rgba(198,12,48,.20), rgba(105,190,40,.16));
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.03),
+        0 10px 26px rgba(0,0,0,.25);
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .teamPill.left{
+      background:
+        linear-gradient(180deg, rgba(105,190,40,.18), rgba(198,12,48,.12));
+    }
+
+    .grid-wrap{overflow-x:auto;max-width:100%}
+    .grid{
+      display:grid;
+      grid-template-columns:76px repeat(10,minmax(92px,1fr));
+      border:1px solid var(--stroke);
+      border-radius:18px;
+      overflow:hidden;
+      min-width:1100px;
+    }
+    .cell{
+      border-right:1px solid rgba(176,183,188,.14);
+      border-bottom:1px solid rgba(176,183,188,.14);
+      padding:8px;
+      min-height:54px;
+      display:flex;align-items:center;justify-content:center;text-align:center;
+      position:relative;
+    }
+    .header{
+      font-weight:900;
+      background:linear-gradient(90deg, rgba(198,12,48,.18), rgba(176,183,188,.10), rgba(105,190,40,.16));
+    }
+    .rowhdr{
+      font-weight:900;
+      background:linear-gradient(180deg, rgba(105,190,40,.16), rgba(0,34,68,.18));
+    }
+    .corner{
+      font-weight:900;
+      background:
+        radial-gradient(120px 60px at 30% 30%, rgba(198,12,48,.22), transparent 60%),
+        radial-gradient(120px 60px at 70% 70%, rgba(105,190,40,.18), transparent 60%);
+    }
+    .cell input{
+      width:100%;
+      text-align:center;
+      border-radius:14px;
+    }
+
+    .win{
+      box-shadow:
+        inset 0 0 0 2px rgba(255,255,255,.08),
+        0 0 30px rgba(105,190,40,.25),
+        0 0 30px rgba(198,12,48,.25);
+      background: rgba(255,255,255,.04);
+    }
+    .badge{
+      position:absolute;top:6px;right:6px;
+      font-size:11px;padding:3px 8px;border-radius:999px;
+      border:1px solid rgba(176,183,188,.25);
+      background:rgba(0,0,0,.25);
+      color:var(--text);
+      pointer-events:none;
+    }
+
+    .muted{color:var(--muted);font-size:13px;line-height:1.35}
+
+    .card{
+      border:1px solid rgba(176,183,188,.18);
+      border-radius:14px;
+      padding:10px 12px;
+      background:rgba(255,255,255,.03);
+      margin-top:10px;
+      text-align:left;
+    }
+    .pill{
+      font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid rgba(176,183,188,.18);
+      background:rgba(0,0,0,.18);color:var(--muted);white-space:nowrap
+    }
+
+    /* Winners Money (under grid) */
+    .moneySquare{
+      margin-top: 14px;
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid rgba(176,183,188,.18);
+      background:
+        radial-gradient(700px 280px at 10% 10%, rgba(198,12,48,.18), transparent 55%),
+        radial-gradient(700px 280px at 90% 15%, rgba(105,190,40,.16), transparent 55%),
+        rgba(255,255,255,.03);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.03),
+        0 12px 40px rgba(0,0,0,.25);
+    }
+    .moneyTitle{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .moneyTitle h3{
+      margin:0;
+      font-size: 15px;
+      letter-spacing: .3px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .spark{
+      width:10px;height:10px;border-radius:999px;
+      background:linear-gradient(90deg,var(--pat-red),var(--hawk-green));
+      box-shadow: 0 0 14px rgba(105,190,40,.35), 0 0 14px rgba(198,12,48,.30);
+    }
+    .moneyGrid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:10px;
+    }
+    @media (max-width: 900px){
+      .moneyGrid{ grid-template-columns: 1fr 1fr; }
+    }
+    .moneyStat{
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(176,183,188,.16);
+      background: rgba(0,0,0,.18);
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+    }
+    .moneyStat .k{color:var(--muted);font-size:12px}
+    .moneyStat .v{font-weight:900}
+    .leader{
+      margin-top: 10px;
+      border-top: 1px solid rgba(176,183,188,.12);
+      padding-top: 10px;
+    }
+    .leaderRow{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.02);
+      border: 1px solid rgba(176,183,188,.10);
+      margin-top: 8px;
+    }
+    .leaderRow strong{font-weight:900}
+  </style>
+</head>
+
+<body>
+  <h2><span class="dot"></span>Squares Board</h2>
+
+  <div class="layout">
+    <div class="panel">
+      <div class="row">
+        <button id="back">← Back to Setup</button>
+        <button id="reload">Reload</button>
+      </div>
+
+      <!-- Grid + team labels -->
+      <div class="boardWrap">
+        <div class="teamTopLabel"><span class="teamPill" id="teamTopName">New England Patriots</span></div>
+        <div class="teamLeftLabel"><span class="teamPill left" id="teamLeftName">Seattle Seahawks</span></div>
+
+        <div class="grid-wrap">
+          <div id="grid" class="grid"></div>
+        </div>
+      </div>
+
+      <div class="muted" style="margin-top:10px;">
+        Winner is based on last digit of <b>Patriots</b> score (columns) and <b>Seahawks</b> score (rows).
+      </div>
+
+      <!-- Winners Money UNDER the grid -->
+      <div class="moneySquare" id="moneySquare"></div>
+    </div>
+
+    <!-- Sidebar: scores + winner readout -->
+    <div class="panel sidebar">
+      <div class="card">
+        <div class="muted" style="margin-bottom:8px;">
+          Enter scores as <b>Patriots–Seahawks</b> (example: <b>14-10</b>)
+        </div>
+
+        <div class="row" style="margin-bottom:8px;">
+          <div style="flex:1;min-width:150px">
+            <div class="muted" style="margin-bottom:6px;">Q1</div>
+            <input id="q1" placeholder="7-3" />
+          </div>
+          <div style="flex:1;min-width:150px">
+            <div class="muted" style="margin-bottom:6px;">HALF</div>
+            <input id="half" placeholder="14-10" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-bottom:8px;">
+          <div style="flex:1;min-width:150px">
+            <div class="muted" style="margin-bottom:6px;">Q3</div>
+            <input id="q3" placeholder="17-13" />
+          </div>
+          <div style="flex:1;min-width:150px">
+            <div class="muted" style="margin-bottom:6px;">FINAL</div>
+            <input id="final" placeholder="24-20" />
+          </div>
+        </div>
+
+        <button id="apply" style="width:100%;">Apply Scores</button>
+      </div>
+
+      <div id="winners" class="card"></div>
+    </div>
+  </div>
+
+  <script>
+    const gridEl = document.getElementById("grid");
+    const winnersEl = document.getElementById("winners");
+    const moneySquareEl = document.getElementById("moneySquare");
+    const teamTopNameEl = document.getElementById("teamTopName");
+    const teamLeftNameEl = document.getElementById("teamLeftName");
+
+    const BET_PER_SQUARE = 1;
+
+    // Split B
+    const SPLIT = { Q1:0.20, HALF:0.30, Q3:0.20, FINAL:0.30 };
+
+    const inputs = {
+      Q1: document.getElementById("q1"),
+      HALF: document.getElementById("half"),
+      Q3: document.getElementById("q3"),
+      FINAL: document.getElementById("final")
+    };
+
+    async function getState(){
+      const r = await fetch("/api/state");
+      return r.json();
+    }
+
+    async function updateCell(r,c,val){
+      await fetch("/api/update",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ row:r, col:c, name:val })
+      });
+    }
+
+    function parseScore(s){
+      const t = (s||"").trim();
+      if (!t) return null;
+      const m = t.match(/^(\d+)\s*[-:]\s*(\d+)$/);
+      if (!m) return { error: "Use format like 14-10" };
+      return { pat: Number(m[1]), sea: Number(m[2]) };
+    }
+
+    function findWinnerIndex(colDigits, rowDigits, patScore, seaScore){
+      const colDigit = patScore % 10;
+      const rowDigit = seaScore % 10;
+      const c = colDigits.indexOf(colDigit);
+      const r = rowDigits.indexOf(rowDigit);
+      if (c === -1 || r === -1) return null;
+      return { r, c, colDigit, rowDigit };
+    }
+
+    function clearHighlights(){
+      gridEl.querySelectorAll(".cell.win").forEach(el => el.classList.remove("win"));
+      gridEl.querySelectorAll(".badge").forEach(el => el.remove());
+    }
+
+    function addBadge(cell, text){
+      const b = document.createElement("div");
+      b.className = "badge";
+      b.textContent = text;
+      cell.appendChild(b);
+    }
+
+    function countFilled(grid){
+      let n = 0;
+      for (let r=0;r<10;r++){
+        for (let c=0;c<10;c++){
+          if ((grid?.[r]?.[c] || "").trim()) n++;
+        }
+      }
+      return n;
+    }
+
+    function money(n){
+      const v = Math.round(n);
+      return "$" + v.toLocaleString();
+    }
+
+    function payoutAmounts(pot){
+      return {
+        Q1: pot * SPLIT.Q1,
+        HALF: pot * SPLIT.HALF,
+        Q3: pot * SPLIT.Q3,
+        FINAL: pot * SPLIT.FINAL
+      };
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[c]));
+    }
+
+    function computeWinners(state){
+      const colDigits = state.col_digits || [];
+      const rowDigits = state.row_digits || [];
+      const ready = colDigits.length === 10 && rowDigits.length === 10;
+      const results = {};
+      if (!ready) return { ready:false, results };
+
+      for (const p of Object.keys(inputs)){
+        const parsed = parseScore(inputs[p].value);
+        if (!parsed || parsed.error) {
+          results[p] = { status: parsed?.error ? "error" : "empty", message: parsed?.error };
+          continue;
+        }
+        const idx = findWinnerIndex(colDigits, rowDigits, parsed.pat, parsed.sea);
+        if (!idx){
+          results[p] = { status:"error", message:"Could not compute winner." };
+          continue;
+        }
+        const name = (state.grid?.[idx.r]?.[idx.c] || "").trim() || "(empty square)";
+        results[p] = { status:"ok", name, idx, score: parsed };
+      }
+      return { ready:true, results };
+    }
+
+    function renderWinners(state){
+      const colDigits = state.col_digits || [];
+      const rowDigits = state.row_digits || [];
+      const ready = colDigits.length === 10 && rowDigits.length === 10;
+
+      if (!ready){
+        winnersEl.innerHTML = `<div class="muted">Digits aren’t assigned yet. Go back to Setup and click “Assign Digits → Go to Board”.</div>`;
+        return;
+      }
+
+      winnersEl.innerHTML = `
+        <div class="row" style="justify-content:space-between;margin-bottom:8px;">
+          <span class="pill">Digits</span>
+          <span class="pill">Seed: ${state.seed}</span>
+        </div>
+        <div class="muted" style="margin-bottom:10px;">
+          Patriots (columns): [${colDigits.join(", ")}]<br/>
+          Seahawks (rows): [${rowDigits.join(", ")}]
+        </div>
+      `;
+
+      const order = ["Q1","HALF","Q3","FINAL"];
+      for (const p of order){
+        const parsed = parseScore(inputs[p].value);
+        let scoreText = inputs[p].value.trim() || "—";
+        let who = "—";
+        let detail = "";
+
+        if (parsed && parsed.error){
+          who = "Invalid score";
+          detail = parsed.error;
+        } else if (parsed){
+          const idx = findWinnerIndex(colDigits, rowDigits, parsed.pat, parsed.sea);
+          if (idx){
+            who = (state.grid?.[idx.r]?.[idx.c] || "").trim() || "(empty square)";
+            detail = `Patriots last digit ${idx.colDigit} (col ${idx.c}) • Seahawks last digit ${idx.rowDigit} (row ${idx.r})`;
+          }
+        }
+
+        winnersEl.innerHTML += `
+          <div style="border-top:1px solid rgba(176,183,188,.12);padding-top:10px;margin-top:10px;">
+            <div class="row" style="justify-content:space-between;margin-bottom:6px;">
+              <span class="pill">${p}</span>
+              <span class="pill">${scoreText}</span>
+            </div>
+            <div style="font-weight:900;">${escapeHtml(who)}</div>
+            <div class="muted">${escapeHtml(detail)}</div>
+          </div>
+        `;
+      }
+    }
+
+    function renderMoneySquare(state){
+      const filled = countFilled(state.grid);
+      const pot = filled * BET_PER_SQUARE;
+      const pays = payoutAmounts(pot);
+
+      const { ready, results } = computeWinners(state);
+      const totals = new Map();
+      const order = ["Q1","HALF","Q3","FINAL"];
+
+      for (const p of order){
+        const payout = pays[p] || 0;
+        const r = results[p];
+        if (!ready || !r || r.status !== "ok") continue;
+        totals.set(r.name, (totals.get(r.name) || 0) + payout);
+      }
+
+      const leaderboard = [...totals.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+      moneySquareEl.innerHTML = `
+        <div class="moneyTitle">
+          <h3><span class="spark"></span> 💸 💸 💸 winnings </h3>
+          <span class="pill">Split B: 20 / 30 / 20 / 30</span>
+        </div>
+
+        <div class="moneyGrid">
+          <div class="moneyStat"><span class="k">Squares Sold</span><span class="v">${filled}</span></div>
+          <div class="moneyStat"><span class="k">Pot</span><span class="v">${money(pot)}</span></div>
+          <div class="moneyStat"><span class="k">$ / Square</span><span class="v">$${BET_PER_SQUARE}</span></div>
+
+          <div class="moneyStat"><span class="k">Q1 (20%)</span><span class="v">${money(pays.Q1)}</span></div>
+          <div class="moneyStat"><span class="k">HALF (30%)</span><span class="v">${money(pays.HALF)}</span></div>
+          <div class="moneyStat"><span class="k">Q3 (20%)</span><span class="v">${money(pays.Q3)}</span></div>
+
+          <div class="moneyStat"><span class="k">FINAL (30%)</span><span class="v">${money(pays.FINAL)}</span></div>
+          <div class="moneyStat"><span class="k">Unassigned/Empty</span><span class="v">${(ready ? "" : "Digits not set")}</span></div>
+          <div class="moneyStat"><span class="k">Rule</span><span class="v">Pat = Col • Sea = Row</span></div>
+        </div>
+
+        <div class="leader">
+          <div class="row" style="justify-content:space-between;margin-bottom:6px;">
+            <span class="pill">Totals by Person</span>
+            <span class="pill">Auto-adds per win</span>
+          </div>
+
+          ${
+            leaderboard.length
+              ? leaderboard.map(([name, amt]) => `
+                  <div class="leaderRow">
+                    <strong>${escapeHtml(name)}</strong>
+                    <span>${money(amt)}</span>
+                  </div>
+                `).join("")
+              : `<div class="muted">Enter scores to populate payouts.</div>`
+          }
+        </div>
+      `;
+    }
+
+    function highlightWinners(state){
+      clearHighlights();
+      const colDigits = state.col_digits || [];
+      const rowDigits = state.row_digits || [];
+      if (!(colDigits.length === 10 && rowDigits.length === 10)) return;
+
+      const map = { Q1:"Q1", HALF:"H", Q3:"Q3", FINAL:"F" };
+      for (const p of Object.keys(inputs)){
+        const parsed = parseScore(inputs[p].value);
+        if (!parsed || parsed.error) continue;
+
+        const idx = findWinnerIndex(colDigits, rowDigits, parsed.pat, parsed.sea);
+        if (!idx) continue;
+
+        const cell = gridEl.querySelector(`.cell[data-r="${idx.r}"][data-c="${idx.c}"]`);
+        if (!cell) continue;
+        cell.classList.add("win");
+        addBadge(cell, map[p]);
+      }
+    }
+
+    function renderGrid(state){
+      // Team labels
+      teamTopNameEl.textContent = state.team_top || "New England Patriots";
+      teamLeftNameEl.textContent = state.team_left || "Seattle Seahawks";
+
+      const colDigits = (state.col_digits?.length === 10) ? state.col_digits : null;
+      const rowDigits = (state.row_digits?.length === 10) ? state.row_digits : null;
+
+      gridEl.innerHTML = "";
+
+      const corner = document.createElement("div");
+      corner.className = "cell header corner";
+      corner.textContent = "SQS";
+      gridEl.appendChild(corner);
+
+      for (let c=0;c<10;c++){
+        const h = document.createElement("div");
+        h.className = "cell header";
+        h.textContent = colDigits ? String(colDigits[c]) : String(c);
+        gridEl.appendChild(h);
+      }
+
+      for (let r=0;r<10;r++){
+        const rh = document.createElement("div");
+        rh.className = "cell rowhdr";
+        rh.textContent = rowDigits ? String(rowDigits[r]) : String(r);
+        gridEl.appendChild(rh);
+
+        for (let c=0;c<10;c++){
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.r = String(r);
+          cell.dataset.c = String(c);
+
+          const input = document.createElement("input");
+          input.value = state.grid?.[r]?.[c] || "";
+          input.placeholder = "name";
+          input.addEventListener("change", async (e) => {
+            await updateCell(r,c,e.target.value.trim());
+            const s = await getState();
+            renderAll(s);
+          });
+
+          cell.appendChild(input);
+          gridEl.appendChild(cell);
+        }
+      }
+    }
+
+    function renderAll(state){
+      renderGrid(state);
+      renderWinners(state);
+      highlightWinners(state);
+      renderMoneySquare(state);
+    }
+
+    async function load(){
+      const s = await getState();
+      renderAll(s);
+    }
+
+    document.getElementById("back").addEventListener("click", () => {
+      window.location.href = "/";
+    });
+
+    document.getElementById("reload").addEventListener("click", load);
+
+    document.getElementById("apply").addEventListener("click", async () => {
+      const s = await getState();
+      renderWinners(s);
+      highlightWinners(s);
+      renderMoneySquare(s);
+    });
+
+    for (const k of Object.keys(inputs)){
+      inputs[k].addEventListener("input", async () => {
+        const s = await getState();
+        renderWinners(s);
+        highlightWinners(s);
+        renderMoneySquare(s);
+      });
+    }
+
+    load();
+  </script>
+</body>
+</html>
